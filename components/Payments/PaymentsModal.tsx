@@ -23,7 +23,7 @@ export default function PaymentModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Add Payment"
-      width="2xl"
+      width="xl"
       footer={
         <div className="flex justify-end gap-3">
           <Button
