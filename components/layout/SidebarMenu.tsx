@@ -43,7 +43,7 @@ export const sidebarMenu = [
   },
   {
     title: "Diet Plans",
-    href: "/dashboard/diet-plans",
+    href: "/dashboard/diet",
     icon: Utensils,
   },
   {

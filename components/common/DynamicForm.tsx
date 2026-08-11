@@ -3,30 +3,28 @@
 import { useEffect, useState, useRef } from "react";
 import Input from "@/components/ui/Input";
 import TextArea from "@/components/ui/Textarea";
-import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import Checkbox from "@/components/ui/Checkbox";
 import Radio from "@/components/ui/Radio";
 
-
-type Option = {
+export type Option = {
   label: string;
-  value: string;
+  value: string | number;
 };
 
-type Field = {
+export type Field = {
   name: string;
   label: string;
   type:
-  | "text"
-  | "email"
-  | "password"
-  | "number"
-  | "date"
-  | "textarea"
-  | "select"
-  | "checkbox"
-  | "radio";
+    | "text"
+    | "email"
+    | "password"
+    | "number"
+    | "date"
+    | "textarea"
+    | "select"
+    | "checkbox"
+    | "radio";
 
   placeholder?: string;
   required?: boolean;
@@ -54,28 +52,34 @@ type Field = {
   options?: Option[];
   rows?: number;
   defaultValue?: any;
-
 };
 
-type Section = {
+export type Section = {
   title?: string;
   description?: string;
   fields: Field[];
 };
 
-type DynamicFormProps = {
+export type DynamicFormProps = {
+  formId?: string;
   sections: Section[];
   submitLabel?: string;
+  showSubmitButton?: boolean;
   initialValues?: Record<string, any>;
+  initialData?: Record<string, any>;
   onSubmit: (data: Record<string, any>) => void;
 };
 
 export default function DynamicForm({
+  formId = "dynamic-form",
   sections,
   submitLabel = "Submit",
-  initialValues = {},
+  showSubmitButton = true,
+  initialValues,
+  initialData,
   onSubmit,
 }: DynamicFormProps) {
+  const mergedInitialValues = initialData || initialValues || {};
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -89,7 +93,7 @@ export default function DynamicForm({
     sections.forEach((section) => {
       section.fields.forEach((field) => {
         values[field.name] =
-          initialValues[field.name] ??
+          mergedInitialValues[field.name] ??
           field.defaultValue ??
           (field.type === "checkbox" ? false : "");
       });
@@ -97,28 +101,32 @@ export default function DynamicForm({
 
     setFormData(values);
     initialized.current = true;
-  }, [sections, initialValues]);
+  }, [sections, mergedInitialValues]);
 
-  const handleChange = (
-    name: string,
-    value: string | boolean | number
-  ) => {
+  const handleChange = (name: string, value: string | boolean | number) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    
+    if (errors[name]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
-
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
     sections.forEach((section) => {
       section.fields.forEach((field) => {
+        const value = formData[field.name];
         if (
           field.required &&
-          !formData[field.name] &&
-          formData[field.name] !== false
+          (value === undefined || value === null || value === "" || value === false)
         ) {
           newErrors[field.name] = `${field.label} is required`;
         }
@@ -126,7 +134,6 @@ export default function DynamicForm({
     });
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
@@ -147,7 +154,7 @@ export default function DynamicForm({
           <TextArea
             label={field.label}
             name={field.name}
-            value={formData[field.name] || ""}
+            value={formData[field.name] ?? ""}
             placeholder={field.placeholder}
             rows={field.rows ?? 4}
             required={field.required}
@@ -155,9 +162,7 @@ export default function DynamicForm({
             error={errors[field.name]}
             helperText={field.helperText}
             className={field.className}
-            onChange={(e) =>
-              handleChange(field.name, e.target.value)
-            }
+            onChange={(e) => handleChange(field.name, e.target.value)}
           />
         );
 
@@ -166,34 +171,28 @@ export default function DynamicForm({
           <Select
             label={field.label}
             name={field.name}
-            value={formData[field.name]}
+            value={formData[field.name] ?? ""}
             placeholder={field.placeholder}
             options={field.options ?? []}
             required={field.required}
             disabled={field.disabled}
             error={errors[field.name]}
             helperText={field.helperText}
-            onChange={(e) =>
-              handleChange(field.name, e.target.value)
-            }
+            onChange={(e) => handleChange(field.name, e.target.value)}
           />
-
         );
 
       case "checkbox":
         return (
           <Checkbox
             label={field.label}
-            checked={formData[field.name] || false}
+            checked={Boolean(formData[field.name])}
             required={field.required}
             disabled={field.disabled}
             error={errors[field.name]}
             helperText={field.helperText}
-            onChange={(e) =>
-              handleChange(field.name, e.target.checked)
-            }
+            onChange={(e) => handleChange(field.name, e.target.checked)}
           />
-
         );
 
       case "radio":
@@ -201,15 +200,14 @@ export default function DynamicForm({
           <Radio
             label={field.label}
             name={field.name}
-            value={formData[field.name]}
+            value={formData[field.name] ?? ""}
             options={field.options ?? []}
             required={field.required}
             isDisabled={field.disabled}
-            onChange={(e) =>
-              handleChange(field.name, e.target.value)
-            }
+            onChange={(e) => handleChange(field.name, e.target.value)}
           />
         );
+
       default:
         return (
           <Input
@@ -235,65 +233,38 @@ export default function DynamicForm({
             autoComplete={field.autoComplete}
             className={field.className}
             labelClassName={field.labelClassName}
-            onChange={(e) =>
-              handleChange(field.name, e.target.value)
-            }
+            onChange={(e) => handleChange(field.name, e.target.value)}
           />
         );
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-8"
-    >
+    <form id={formId} onSubmit={handleSubmit} className="space-y-6">
       {sections.map((section, index) => (
         <div
           key={`section-${section.title ?? index}`}
-          className="rounded-lg border bg-white p-6 shadow"
+          className="rounded-lg border bg-white p-6 shadow-sm"
         >
           {section.title && (
-            <h2 className="mb-2 text-xl font-semibold">
+            <h2 className="mb-1 text-lg font-semibold text-slate-800">
               {section.title}
             </h2>
           )}
 
           {section.description && (
-            <p className="mb-6 text-sm text-gray-500">
+            <p className="mb-4 text-sm text-gray-500">
               {section.description}
             </p>
           )}
 
-          <div className="grid gap-5">
+          <div className="grid gap-4">
             {section.fields.map((field) => (
-              <div
-                key={field.name}
-                className={field.className}
-              >
-                {field.type !== "checkbox" && (
-                  <label className="mb-2 block font-medium">
-                    {field.label}
-
-                    {field.required && (
-                      <span className="text-red-500">
-                        {" "}
-                        *
-                      </span>
-                    )}
-                  </label>
-                )}
-
+              <div key={field.name} className={field.className}>
                 {renderField(field)}
 
-                {field.type === "checkbox" && (
-                  <span className="ml-2">
-                    {field.label}
-                  </span>
-                )}
-
                 {errors[field.name] && (
-                  <p className="mt-1 text-sm text-red-500">
+                  <p className="mt-1 text-xs text-red-500">
                     {errors[field.name]}
                   </p>
                 )}
@@ -303,12 +274,14 @@ export default function DynamicForm({
         </div>
       ))}
 
-      <button
-        type="submit"
-        className="rounded bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-      >
-        {submitLabel}
-      </button>
+      {showSubmitButton && (
+        <button
+          type="submit"
+          className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          {submitLabel}
+        </button>
+      )}
     </form>
   );
 }
