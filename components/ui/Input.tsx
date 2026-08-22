@@ -125,7 +125,7 @@ export default function Input({
           onChange={onChange}
           onBlur={onBlur}
           className={`
-            w-full bg-transparent color-black py-3 outline-none
+            w-full bg-transparent text-color-black py-3 outline-none
             disabled:cursor-not-allowed
             disabled:opacity-70
             ${className}

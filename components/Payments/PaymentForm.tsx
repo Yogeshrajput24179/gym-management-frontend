@@ -1,93 +1,142 @@
 "use client";
 
-import Input from "@/components/ui/Input";
+import DynamicForm from "@/components/common/DynamicForm";
+import { FormSection } from "@/components/common/Types";
+import { useData } from "@/context/DataContext"; // Adjust import path if needed
 
-export default function PaymentForm() {
+interface PaymentFormProps {
+  initialValues?: Record<string, any>;
+  onSubmit: (values: Record<string, any>) => void;
+  onCancel: () => void;
+  submitText?: string;
+}
+
+export default function PaymentForm({
+  initialValues = {},
+  onSubmit,
+  onCancel,
+  submitText = "Save Payment",
+}: PaymentFormProps) {
+  const { members, plans, loading } = useData();
+
+  // Format context data for dynamic select options
+  const memberOptions = members.map((m) => ({
+    label: `${m.full_name || m.name} (ID: ${m.id})`,
+    value: m.id,
+  }));
+
+  const planOptions = plans.map((p) => ({
+    label: `${p.plan_name || p.name} — ₹${p.price}`,
+    value: p.id,
+  }));
+
+  const defaultValues = {
+    payment_date: new Date().toISOString().split("T")[0],
+    payment_method: "Cash",
+    status: "Paid",
+    ...initialValues,
+  };
+
+  const handleFormSubmit = (formData: Record<string, any>) => {
+    const payload = {
+      ...formData,
+      member_id: Number(formData.member_id),
+      membership_plan_id: Number(formData.membership_plan_id),
+      amount: parseFloat(formData.amount),
+      transaction_id: formData.transaction_id?.trim() || null,
+      remarks: formData.remarks?.trim() || null,
+    };
+
+    onSubmit(payload);
+  };
+
+  const paymentSections: FormSection[] = [
+    {
+      title: "Payment Information",
+      fields: [
+        {
+          name: "member_id",
+          label: "Member",
+          type: "select",
+          required: true,
+          disabled: loading,
+          placeholder: loading ? "Loading members..." : "Select Member",
+          options: memberOptions,
+        },
+        {
+          name: "membership_plan_id",
+          label: "Membership Plan",
+          type: "select",
+          required: true,
+          disabled: loading,
+          placeholder: loading ? "Loading plans..." : "Select Plan",
+          options: planOptions,
+        },
+        {
+          name: "amount",
+          label: "Amount (₹)",
+          type: "number",
+          placeholder: "0.00",
+          required: true,
+        },
+        {
+          name: "payment_date",
+          label: "Payment Date",
+          type: "date",
+          required: true,
+        },
+      ],
+    },
+    {
+      title: "Transaction & Status",
+      fields: [
+        {
+          name: "payment_method",
+          label: "Payment Method",
+          type: "select",
+          required: true,
+          options: [
+            { label: "Cash", value: "Cash" },
+            { label: "UPI", value: "UPI" },
+            { label: "Card", value: "Card" },
+            { label: "Net Banking", value: "Net Banking" },
+          ],
+        },
+        {
+          name: "status",
+          label: "Status",
+          type: "select",
+          required: true,
+          options: [
+            { label: "Paid", value: "Paid" },
+            { label: "Pending", value: "Pending" },
+            { label: "Failed", value: "Failed" },
+          ],
+        },
+        {
+          name: "transaction_id",
+          label: "Transaction ID / Ref No",
+          type: "text",
+          placeholder: "e.g. UPI/123456789",
+        },
+        {
+          name: "remarks",
+          label: "Remarks",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter optional remarks or notes",
+        },
+      ],
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-
-      {/* Member */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Member <span className="text-red-500">*</span>
-        </label>
-
-        <select className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
-          <option value="">Select Member</option>
-          <option>Yogesh Rajput</option>
-          <option>Amit Sharma</option>
-          <option>Rahul Verma</option>
-        </select>
-      </div>
-
-      {/* Membership Plan */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Membership Plan
-        </label>
-
-        <select className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
-          <option value="">Select Plan</option>
-          <option>Basic</option>
-          <option>Silver</option>
-          <option>Gold</option>
-          <option>Premium</option>
-        </select>
-      </div>
-
-      {/* Amount */}
-      <Input
-        label="Amount"
-        type="number"
-        placeholder="Enter payment amount"
-      />
-
-      {/* Payment Date */}
-      <Input
-        label="Payment Date"
-        type="date"
-      />
-
-      {/* Payment Method */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Payment Method
-        </label>
-
-        <select className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
-          <option value="">Select Method</option>
-          <option>Cash</option>
-          <option>UPI</option>
-          <option>Card</option>
-          <option>Bank Transfer</option>
-        </select>
-      </div>
-
-      {/* Status */}
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Payment Status
-        </label>
-
-        <select className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
-          <option>Paid</option>
-          <option>Pending</option>
-        </select>
-      </div>
-
-      {/* Remarks */}
-      <div className="md:col-span-2">
-        <label className="mb-2 block text-sm font-medium text-slate-700">
-          Remarks
-        </label>
-
-        <textarea
-          rows={4}
-          placeholder="Enter remarks (optional)"
-          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-
-    </div>
+    <DynamicForm
+      sections={paymentSections}
+      initialValues={defaultValues}
+      submitLabel={submitText}
+      onSubmit={handleFormSubmit}
+      onCancel={onCancel}
+    />
   );
 }

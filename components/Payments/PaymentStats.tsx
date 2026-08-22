@@ -1,69 +1,81 @@
 "use client";
 
 import {
+  CreditCard,
   IndianRupee,
-  Wallet,
   Clock3,
-  CircleCheckBig,
+  TrendingUp,
 } from "lucide-react";
 
-const stats = [
-  {
-    title: "Total Revenue",
-    value: "₹4,85,000",
-    icon: IndianRupee,
-    iconBg: "bg-green-100",
-    iconColor: "text-green-600",
-  },
-  {
-    title: "Today's Collection",
-    value: "₹12,500",
-    icon: Wallet,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
-  },
-  {
-    title: "Pending Payments",
-    value: "18",
-    icon: Clock3,
-    iconBg: "bg-yellow-100",
-    iconColor: "text-yellow-600",
-  },
-  {
-    title: "Completed Payments",
-    value: "142",
-    icon: CircleCheckBig,
-    iconBg: "bg-purple-100",
-    iconColor: "text-purple-600",
-  },
-];
+interface PaymentStatsProps {
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  totalPayments: number;
+}
 
-export default function PaymentStats() {
+export default function PaymentStats({
+  totalAmount,
+  paidAmount,
+  pendingAmount,
+  totalPayments,
+}: PaymentStatsProps) {
+  const stats = [
+    {
+      title: "Total Revenue",
+      value: `₹${totalAmount.toLocaleString("en-IN")}`,
+      icon: IndianRupee,
+      description: "All payment records",
+    },
+    {
+      title: "Paid Amount",
+      value: `₹${paidAmount.toLocaleString("en-IN")}`,
+      icon: TrendingUp,
+      description: "Successfully received",
+    },
+    {
+      title: "Pending Amount",
+      value: `₹${pendingAmount.toLocaleString("en-IN")}`,
+      icon: Clock3,
+      description: "Awaiting payment",
+    },
+    {
+      title: "Total Payments",
+      value: totalPayments.toString(),
+      icon: CreditCard,
+      description: "Payment transactions",
+    },
+  ];
+
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-      {stats.map((item) => {
-        const Icon = item.icon;
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
 
         return (
           <div
-            key={item.title}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+            key={stat.title}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">
-                  {item.title}
+                  {stat.title}
                 </p>
 
-                <h2 className="mt-2 text-3xl font-bold text-slate-800">
-                  {item.value}
-                </h2>
+                <h3 className="mt-2 text-2xl font-bold text-slate-800">
+                  {stat.value}
+                </h3>
               </div>
 
-              <div className={`rounded-xl p-3 ${item.iconBg}`}>
-                <Icon className={`h-6 w-6 ${item.iconColor}`} />
+              <div className="rounded-lg bg-slate-100 p-3">
+                <Icon className="h-5 w-5 text-slate-700" />
               </div>
             </div>
+
+            <p className="mt-3 text-xs text-slate-400">
+              {stat.description}
+            </p>
           </div>
         );
       })}

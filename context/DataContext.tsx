@@ -37,6 +37,7 @@ type DataContextType = {
   trainers: any[];
   users: any[];
   plans: any[];
+  payments: any[];
   loading: boolean;
   attendance: any[];
   fetchAttendance: () => Promise<void>;
@@ -44,6 +45,7 @@ type DataContextType = {
   fetchTrainers: () => Promise<void>;
   fetchUsers: () => Promise<void>;
   fetchPlans: () => Promise<void>;
+  fetchPayments: () => Promise<void>;
   fetchAllData: () => Promise<void>;
 };
 
@@ -63,6 +65,7 @@ export const DataProvider = ({ children }: Props) => {
   const [trainers, setTrainers] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [attendance, setAttendance] = useState<any[]>([]);
 
@@ -119,7 +122,7 @@ export const DataProvider = ({ children }: Props) => {
   // Fetch Plans
   const fetchPlans = useCallback(async () => {
     try {
-      const { data } = await api.get("/plan/all");
+      const { data } = await api.get("/membershipPlan/all");
       setPlans(data?.data || []);
     } catch (err) {
       console.warn("Failed to fetch plans:", err);
@@ -127,14 +130,22 @@ export const DataProvider = ({ children }: Props) => {
     }
   }, []);
 
+  // Fetch Payments
+  const fetchPayments = useCallback(async () => {
+    try {
+      const { data } = await api.get("/payment/all");
+      setPayments(data?.data || []);
+    } catch (err) {
+      console.warn("Failed to fetch payments:", err);
+      setPayments([]);
+    }
+  }, []);
 
-  //fetch attendence
-
+  // Fetch Attendance
   const fetchAttendance = useCallback(async () => {
     try {
       const { data } = await api.get("/attendence/all");
       setAttendance(data?.data || []);
-      console.log("Fetched attendance:", data?.data);
     } catch (err) {
       console.warn("Failed to fetch attendance:", err);
       setAttendance([]);
@@ -151,13 +162,21 @@ export const DataProvider = ({ children }: Props) => {
         fetchUsers(),
         fetchAttendance(),
         fetchPlans(),
+        fetchPayments(),
       ]);
     } catch (err) {
       console.error("Error fetching all data:", err);
     } finally {
       setLoading(false);
     }
-  }, [fetchMembers, fetchTrainers, fetchUsers, fetchPlans, fetchAttendance]);
+  }, [
+    fetchMembers,
+    fetchTrainers,
+    fetchUsers,
+    fetchPlans,
+    fetchAttendance,
+    fetchPayments,
+  ]);
 
   useEffect(() => {
     fetchAllData();
@@ -171,6 +190,7 @@ export const DataProvider = ({ children }: Props) => {
         trainers,
         users,
         plans,
+        payments,
         loading,
         attendance,
         fetchAttendance,
@@ -178,6 +198,7 @@ export const DataProvider = ({ children }: Props) => {
         fetchTrainers,
         fetchUsers,
         fetchPlans,
+        fetchPayments,
         fetchAllData,
       }}
     >
